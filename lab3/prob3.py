@@ -35,13 +35,26 @@ class Elev:
         self.executed_time += 1
         self.activites[self.current_activity.nume] += 1
 
-        self.sanatate -= self.current_activity.factor_sanatate / self.current_activity.durata
+        self.sanatate += self.current_activity.factor_sanatate / self.current_activity.durata
         self.inteligenta += self.current_activity.factor_inteligenta / self.current_activity.durata * self.coeficient
         self.oboseala += self.current_activity.factor_oboseala / self.current_activity.durata * self.coeficient
         self.bun_dispozitie += self.current_activity.factor_dispozitie / self.current_activity.durata * self.coeficient
         self.get_state()
         if self.executed_time >= self.current_activity.durata:
             self.has_activity = False
+
+        self.sanatate = min(100, self.sanatate)
+        self.sanatate = max(0, self.sanatate)
+
+        self.inteligenta = min(100, self.inteligenta)
+        self.inteligenta = max(0, self.inteligenta)
+
+        self.oboseala = min(100, self.oboseala)
+        self.oboseala = max(0, self.oboseala)
+
+        self.bun_dispozitie = min(100, self.bun_dispozitie)
+        self.bun_dispozitie = max(0, self.bun_dispozitie)
+
         return self.executed_time <= self.current_activity.durata
 
     def is_final(self):

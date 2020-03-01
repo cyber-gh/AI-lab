@@ -1,4 +1,5 @@
 import random
+import time
 
 
 class Elev:
@@ -44,17 +45,17 @@ class Elev:
         return self.executed_time <= self.current_activity.durata
 
     def is_final(self):
-        if not (0 < self.sanatate < 100):
+        if self.sanatate <= 0:
             return False
 
-        if not (0 < self.inteligenta < 100):
+        if self.inteligenta >= 100:
             return False
 
-        if not (0 < self.oboseala < 100):
-            return False
-
-        if not (0 < self.bun_dispozitie < 100):
-            return False
+        # if not (0 < self.oboseala < 100):
+        #     return False
+        #
+        # if not (0 < self.bun_dispozitie < 100):
+        #     return False
 
         return True
 
@@ -68,9 +69,11 @@ class Elev:
             self.coeficient = 1.0
 
         if self.inteligenta >= 100:
+            self.is_active = False
             return "Elevul a absolvit"
 
         return "Elevul continua"
+
 
     def show_activities(self):
         for key, value in self.activites.items():
@@ -115,6 +118,11 @@ if __name__ == '__main__':
         pause_time = current_time + nr
         while current_time < pause_time:
             for student in students:
+                if not student.is_final():
+                    print(student)
+                    print(student.get_state())
+                    continue
+
                 if student.needs_new_activity():
                     student.apply_activity(random.choice(activities))
                 student.execute_activity()
@@ -123,6 +131,8 @@ if __name__ == '__main__':
                 print()
                 print("  " + student.get_state())
             current_time += 1
+            time.sleep(1)
+
             if current_time >= 22:
                 current_time = 6
                 pause_time = 6

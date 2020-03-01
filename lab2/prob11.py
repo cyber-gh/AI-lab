@@ -5,7 +5,7 @@ if __name__ == '__main__':
             (idx, nume) = tuple(line[:-1].split(":"))
             idx = int(idx)
             if idx > len(lst):
-                lst += (["gol"] * (len(lst) - idx - 1))
+                lst = lst + (["gol"] * (idx - len(lst) - 1))
                 lst.append(nume)
             else:
                 lst[idx] = nume

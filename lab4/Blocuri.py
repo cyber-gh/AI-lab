@@ -25,9 +25,7 @@ class State:
                 succ = dp(new_config)
                 succ[j].insert(0, el)
 
-                configs.append(State(succ))
-
-        return configs
+                yield State(succ)
 
     def __eq__(self, other):
         return self.config == other.config

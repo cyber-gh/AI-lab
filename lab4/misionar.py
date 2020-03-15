@@ -1,27 +1,68 @@
 from copy import deepcopy as dp
 from pprint import pprint as pp
 
-M = 2
-
 
 class State:
-    def __init__(self, mal, config):
-        self.mal = mal
-        self.config = config
+    def __init__(self, missionary_left, cannibals_left, missionary_right, cannibals_right, boat_capacity, boat_beach):
+        self.boat_beach = boat_beach
+        self.boat_capacity = boat_capacity
+        self.cannibals_right = cannibals_right
+        self.missionary_right = missionary_right
+        self.cannibals_left = cannibals_left
+        self.missionary_left = missionary_left
+
+    def get_tuple(self):
+        return self.cannibals_left, self.cannibals_right, self.missionary_left, self.missionary_right, self.boat_beach
+
+    def is_good(self):
+        if 1 <= self.missionary_left < self.cannibals_left:
+            return False
+        if 1 <= self.missionary_right < self.cannibals_right:
+            return False
+        return True
 
     def successors(self):
-        ((bad_left, good_left), (bad_right, good_right)) = self.config
+        st = dp(self)
 
-        return []
+        if st.boat_beach == 0:
+            for can in range(0, st.cannibals_left + 1):
+                for miss in range(0, st.missionary_left + 1):
+                    if 0 < can + miss <= st.boat_capacity and \
+                            ((miss >= can) or (miss == 0)):
+                        next_state = dp(st)
+                        next_state.cannibals_left -= can
+                        next_state.missionary_left -= miss
+                        next_state.cannibals_right += can
+                        next_state.missionary_right += miss
+                        next_state.boat_beach = 1 - st.boat_beach
+                        if next_state.is_good():
+                            yield next_state
+        else:
+            for can in range(0, st.cannibals_right + 1):
+                for miss in range(0, st.missionary_right + 1):
+                    if 0 < can + miss <= st.boat_capacity and \
+                            ((miss >= can) or (miss == 0)):
+                        next_state = dp(st)
+                        next_state.cannibals_right -= can
+                        next_state.missionary_right -= miss
+                        next_state.cannibals_left += can
+                        next_state.missionary_left += miss
+                        next_state.boat_beach = 1 - st.boat_beach
+                        if next_state.is_good():
+                            yield next_state
+
+    def __hash__(self):
+        return hash(self.get_tuple())
 
     def __eq__(self, other):
-        return self.config == other.config and self.mal == other.mal
+        return self.get_tuple() == other.get_tuple()
 
     def __ne__(self, other):
-        return self.config != other.config and self.mal != other.mal
+        return self.get_tuple() != other.get_tuple()
 
-    def __repr__(self):
-        return str(self.config)
+    def __str__(self):
+        return "left {} : {}, right {} : {}, {}".format(self.cannibals_left, self.missionary_left, self.cannibals_right,
+                                                  self.missionary_right, self.boat_beach)
 
 
 class PathState:
@@ -30,44 +71,56 @@ class PathState:
         self.state = state
         self.cost = cost
 
-    def heuristic(self, target_state):
-        return 0
+    def heuristic(self):
+        st = self.state
+        return (st.cannibals_left + st.missionary_left) // st.boat_capacity
 
     def __repr__(self):
-        return str(self.state.config) + ", " + str(self.cost)
+        return str(self.state) + ", " + str(self.cost)
 
 
 visited = []
+memorized = dict()
 
 if __name__ == '__main__':
-    start_state = State(0, ((3, 3), (0, 0)))
-    target_state = State(1, ((0, 0), (3, 3)))
+    M = 3
+    N = 5
+    start_state = State(N, N, 0, 0, M, 0)
+    target_state = State(0, 0, N, N, M, 1)
 
     open_list = [PathState(dp(start_state), 0, None)]
     visited = [PathState(dp(start_state), 0, None)]
+    memorized[start_state] = PathState(dp(start_state), 0, None)
+    # for el in start_state.successors():
+    #     print(el)
+    #
+    # tmp = State(3, 1, 0, 2, M, 1)
+    # print(tmp.is_good())
+
 
     while len(open_list) > 0:
-        open_list.sort(key=lambda pth: pth.cost + pth.heuristic(target_state))
+        open_list.sort(key=lambda pth: pth.cost + pth.heuristic())
         current = open_list.pop(0)
+
         if current.state == target_state:
-            print("success " + str(current.cost))
             it = current
+            counter = 0
             while True:
+                counter += 1
                 print(it.state)
                 if it.parent_state is None:
                     break
                 it = it.parent_state
+            print(counter)
             break
         for nxt in current.state.successors():
             new_cost = current.cost + 1
-            old_path_state = next((node for node in visited if node.state == nxt), None)
 
-            if old_path_state is None:
+            if not (nxt in memorized):
                 open_list.append(PathState(nxt, new_cost, current))
-                visited.append(PathState(nxt, new_cost, current))
+                memorized[nxt] = PathState(nxt, new_cost, current)
             else:
-                if new_cost < old_path_state.cost:
-                    open_list = open_list.filter(lambda x: x.state != old_path_state.state)
-                    visited = visited.filter(lambda x: x.state != old_path_state.state)
+                if new_cost < memorized[nxt].cost:
+                    open_list = [x for x in open_list if x.state != memorized[nxt].state]
                     open_list.append(PathState(nxt, new_cost, current))
-                    visited.append(PathState(nxt, new_cost, current))
+                    memorized[nxt].cost = new_cost

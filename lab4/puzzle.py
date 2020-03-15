@@ -60,7 +60,7 @@ visited = []
 memorized = dict()
 
 if __name__ == '__main__':
-    start_state = State([[5, 7, 2], [8, 0, 6], [3, 1, 4]], 1, 1)
+    start_state = State([[1, 2, 3], [4, 5, 8], [6, 7, 0]], 2, 2)
     target_state = State([[1, 2, 3], [4, 5, 6], [7, 8, 0]], 2, 2)
 
     open_list = [PathState(dp(start_state), 0, None)]
@@ -70,13 +70,17 @@ if __name__ == '__main__':
     while len(open_list) > 0:
         open_list.sort(key=lambda pth: pth.cost + pth.heuristic(target_state))
         current = open_list.pop(0)
+
         if current.state == target_state:
             it = current
+            counter = 0
             while True:
+                counter += 1
                 print(it.state)
                 if it.parent_state is None:
                     break
                 it = it.parent_state
+            print(counter)
             break
         for nxt in current.state.successors():
             new_cost = current.cost + 1

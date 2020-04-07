@@ -3,24 +3,26 @@ from pprint import pprint as pp
 
 
 class State:
-    def __init__(self, config, x, y):
-        self.y = y
-        self.x = x
+    def __init__(self, config, keys):
         self.config = config
-        self.n = len(config)
+        self.keys = keys
+        self.used_key = "no key"
 
     def successors(self):
-        dxy = [(1, 0), (0, -1), (-1, 0), (0, 1)]
-        for dx, dy in dxy:
-            nxt_x = self.x + dx
-            nxt_y = self.y + dy
-            if 0 <= nxt_x < self.n and 0 <= nxt_y < self.n:
-                cpy = dp(self.config)
-                cpy[nxt_x][nxt_y], cpy[self.x][self.y] = cpy[self.x][self.y], cpy[nxt_x][nxt_y]
-                yield State(cpy, nxt_x, nxt_y)
+        for key in keys:
+            succ = dp(self)
+            succ.used_key = key
+            for index, el in enumerate(key):
+                if el == "d":
+                    succ.config[index] -= 1
+                    succ.config[index] = max(succ.config[index], 0)
+                if el == "i":
+                    succ.config[index] += 1
+
+            yield succ
 
     def __hash__(self):
-        return hash(tuple(tuple(x) for x in self.config))
+        return hash(tuple(self.config))
 
     def __eq__(self, other):
         return self.config == other.config
@@ -29,10 +31,10 @@ class State:
         return self.config != other.config
 
     def __repr__(self):
-        return str(self.config) + "x = {}, y = {}".format(self.x, self.y)
+        return str(self.config) + " " + self.used_key
 
     def __str__(self):
-        return str(self.config) + "x = {}, y = {}".format(self.x, self.y)
+        return str(self.config) + " " + self.used_key
 
 
 class PathState:
@@ -42,15 +44,8 @@ class PathState:
         self.cost = cost
 
     def heuristic(self, target_state):
-        tg = target_state.config
-        st = self.state.config
-        tst = { tg[i][j]: (i, j) for i in range(0, len(tg)) for j in range(0, len(tg))}
-        cnt = 0
-        for idx in range(0, len(tg)):
-            for i in range(0, len(tg)):
-                cnt += abs(idx - tst[st[idx][i]][0]) + abs(i - tst[st[idx][i]][1])
 
-        return cnt
+        return sum(abs(x) for x in self.state.config)
 
     def __repr__(self):
         return str(self.state) + ", " + str(self.cost)
@@ -59,9 +54,21 @@ class PathState:
 visited = []
 memorized = dict()
 
+def readKeys():
+    lst = []
+    with open("lacat.txt","r") as fin:
+        for line in fin.readlines():
+            lst.append(line[:-1])
+    return lst
+
 if __name__ == '__main__':
-    start_state = State([[1, 2, 3], [4, 5, 8], [6, 7, 0]], 2, 2)
-    target_state = State([[1, 2, 3], [4, 5, 6], [7, 8, 0]], 2, 2)
+
+    keys = readKeys()
+
+    print(keys)
+
+    start_state = State([1] * 7, keys)
+    target_state = State([0] * 7, keys)
 
     open_list = [PathState(dp(start_state), 0, None)]
     visited = [PathState(dp(start_state), 0, None)]

@@ -2,6 +2,7 @@ from copy import deepcopy as dp
 from pprint import pprint as pp
 
 
+
 class State:
     def __init__(self, config, x, y):
         self.y = y
